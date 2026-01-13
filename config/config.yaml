@@ -1,0 +1,51 @@
+# AlphaPulse-RL Trading System Configuration
+
+# System Settings
+system:
+  name: "AlphaPulse-RL"
+  version: "1.0.0"
+  environment: "development"  # development, staging, production
+  
+# Exchange Configuration
+exchange:
+  name: "WEEX"
+  api_base_url: "https://api.weex.com"
+  rate_limit_requests_per_second: 10
+  timeout_seconds: 30
+  
+# Trading Pairs
+trading_pairs:
+  - "BTCUSDT"
+  - "ETHUSDT"
+
+# Data Configuration
+data:
+  timeframes:
+    - "5m"
+    - "15m"
+  cache_duration_minutes: 60
+  max_cache_size_mb: 100
+  data_validation_enabled: true
+  
+# Model Configuration
+model:
+  confidence_threshold: 0.8
+  model_save_interval_minutes: 60
+  model_backup_count: 5
+  
+# Logging Configuration
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  console_output: true
+  file_output: true
+  max_file_size_mb: 50
+  backup_count: 10
+  trade_history_file: "logs/trades.csv"
+  ai_decisions_file: "logs/ai_decisions.json"
+  
+# Performance Settings
+performance:
+  batch_size: 32
+  max_memory_usage_mb: 1024
+  enable_caching: true
+  parallel_processing: false

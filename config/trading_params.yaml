@@ -1,0 +1,70 @@
+# Trading Parameters Configuration
+
+# Risk Management Parameters
+risk:
+  max_leverage: 12.0
+  max_position_size_percent: 10.0  # Maximum 10% of equity per position
+  max_daily_loss_percent: 3.0     # Maximum 3% daily loss
+  max_total_drawdown_percent: 12.0 # Emergency flatten at 12% drawdown
+  volatility_threshold: 0.05       # Block trades above 5% volatility
+  
+# Trading Strategy Parameters
+strategy:
+  trading_interval_seconds: 300    # 5-minute intervals
+  confidence_threshold: 0.8        # Minimum confidence to execute trades
+  overtrading_penalty: 0.01        # Penalty coefficient for excessive trading
+  
+# Technical Indicators
+indicators:
+  rsi_period: 14
+  macd_fast: 12
+  macd_slow: 26
+  macd_signal: 9
+  atr_period: 14
+  volume_zscore_window: 20
+  
+# Reward Function Parameters
+reward:
+  volatility_penalty: 0.1          # Penalty for high volatility
+  drawdown_penalty: 0.2            # Penalty for drawdown
+  overtrading_penalty: 0.01        # Penalty for excessive trading
+  transaction_cost_bps: 5          # Transaction cost in basis points
+  
+# PPO Agent Parameters
+ppo:
+  learning_rate: 0.0003
+  gamma: 0.99                      # Discount factor
+  gae_lambda: 0.95                 # GAE lambda
+  clip_range: 0.2                  # PPO clip range
+  entropy_coef: 0.01               # Entropy coefficient
+  value_function_coef: 0.5         # Value function coefficient
+  max_grad_norm: 0.5               # Gradient clipping
+  
+# Network Architecture
+network:
+  actor_layers: [64, 32]           # Hidden layers for actor network
+  critic_layers: [64, 32]          # Hidden layers for critic network
+  activation: "tanh"               # Activation function
+  
+# Training Parameters
+training:
+  total_timesteps: 1000000
+  batch_size: 64
+  n_epochs: 10
+  buffer_size: 100000
+  learning_starts: 10000
+  train_freq: 1
+  target_update_interval: 1000
+  
+# Environment Parameters
+environment:
+  initial_balance: 1000.0          # Starting balance for training/backtesting
+  transaction_cost_percent: 0.05   # 0.05% transaction cost
+  slippage_percent: 0.02           # 0.02% slippage
+  
+# Backtesting Parameters
+backtesting:
+  start_date: "2023-01-01"
+  end_date: "2023-12-31"
+  initial_balance: 10000.0
+  benchmark: "BTCUSDT"

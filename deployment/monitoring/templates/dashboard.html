@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AlphaPulse-RL Monitoring Dashboard</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+        }
+        .header { 
+            background: rgba(255, 255, 255, 0.95); 
+            color: #2c3e50; 
+            padding: 30px; 
+            border-radius: 15px; 
+            margin-bottom: 30px; 
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            text-align: center;
+        }
+        .header h1 { 
+            margin: 0; 
+            font-size: 2.5em; 
+            font-weight: 300; 
+        }
+        .header p { 
+            margin: 10px 0 0 0; 
+            opacity: 0.7; 
+            font-size: 1.1em; 
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-left: 10px;
+            animation: pulse 2s infinite;
+        }
+        .status-healthy { background-color: #27ae60; }
+        .status-warning { background-color: #f39c12; }
+        .status-error { background-color: #e74c3c; }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .metrics-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
+            gap: 25px; 
+            margin-bottom: 30px;
+        }
+        .metric-card { 
+            background: rgba(255, 255, 255, 0.95); 
+            padding: 25px; 
+            border-radius: 15px; 
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        }
+        .metric-value { 
+            font-size: 2.2em; 
+            font-weight: 600; 
+            margin: 10px 0;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .metric-label { 
+            color: #7f8c8d; 
+            margin-bottom: 5px; 
+            font-weight: 500;
+            text-transform: uppercase;
+            font-size: 0.9em;
+            letter-spacing: 0.5px;
+        }
+        .metric-change {
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        .status-good { color: #27ae60; }
+        .status-warning { color: #f39c12; }
+        .status-error { color: #e74c3c; }
+        .status-info { color: #3498db; }
+        
+        .dashboard-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+        .section-title {
+            font-size: 1.4em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 10px;
+        }
+        
+        .alerts-container {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .alert-item {
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+        .alert-critical { 
+            background-color: #fdf2f2; 
+            border-left-color: #e74c3c; 
+        }
+        .alert-warning { 
+            background-color: #fefbf3; 
+            border-left-color: #f39c12; 
+        }
+        .alert-info { 
+            background-color: #f0f8ff; 
+            border-left-color: #3498db; 
+        }
+        
+        .logs-container { 
+            max-height: 400px; 
+            overflow-y: auto;
+            background: #2c3e50;
+            border-radius: 10px;
+            padding: 20px;
+        }
+        .log-entry { 
+            font-family: 'Courier New', monospace; 
+            font-size: 12px; 
+            margin-bottom: 5px;
+            color: #ecf0f1;
+            line-height: 1.4;
+        }
+        .log-entry.error { color: #e74c3c; }
+        .log-entry.warning { color: #f39c12; }
+        .log-entry.info { color: #3498db; }
+        
+        .performance-chart {
+            height: 200px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+        
+        .refresh-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(52, 152, 219, 0.9);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 25px;
+            font-size: 0.9em;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .refresh-indicator.show {
+            opacity: 1;
+        }
+        
+        @media (max-width: 768px) {
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+            .header h1 {
+                font-size: 2em;
+            }
+            body {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="refresh-indicator" id="refresh-indicator">
+        Updating data...
+    </div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>AlphaPulse-RL Trading System</h1>
+            <p>Real-time Monitoring Dashboard</p>
+            <span class="status-indicator status-healthy" id="system-status"></span>
+            <span id="last-update">Last updated: Loading...</span>
+        </div>
+        
+        <div class="metrics-grid" id="metrics-grid">
+            <!-- Metrics will be loaded here -->
+        </div>
+        
+        <div class="dashboard-section">
+            <h3 class="section-title">Recent Alerts</h3>
+            <div class="alerts-container" id="alerts-content">
+                <!-- Alerts will be loaded here -->
+            </div>
+        </div>
+        
+        <div class="dashboard-section">
+            <h3 class="section-title">Performance Overview</h3>
+            <div class="performance-chart" id="performance-chart">
+                Performance charts will be displayed here
+            </div>
+        </div>
+        
+        <div class="dashboard-section">
+            <h3 class="section-title">System Logs</h3>
+            <div class="logs-container" id="logs-content">
+                <!-- Logs will be loaded here -->
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let lastUpdateTime = null;
+        
+        function showRefreshIndicator() {
+            const indicator = document.getElementById('refresh-indicator');
+            indicator.classList.add('show');
+            setTimeout(() => indicator.classList.remove('show'), 2000);
+        }
+        
+        function updateMetrics() {
+            showRefreshIndicator();
+            
+            fetch('/api/metrics')
+                .then(response => response.json())
+                .then(data => {
+                    const grid = document.getElementById('metrics-grid');
+                    grid.innerHTML = '';
+                    
+                    lastUpdateTime = new Date();
+                    document.getElementById('last-update').textContent = 
+                        'Last updated: ' + lastUpdateTime.toLocaleTimeString();
+                    
+                    // System metrics
+                    if (data.system) {
+                        grid.innerHTML += createMetricCard(
+                            'CPU Usage', 
+                            data.system.cpu_percent.toFixed(1) + '%', 
+                            getStatusClass(data.system.cpu_percent, 70, 85),
+                            'fas fa-microchip'
+                        );
+                        
+                        grid.innerHTML += createMetricCard(
+                            'Memory Usage', 
+                            data.system.memory_percent.toFixed(1) + '%', 
+                            getStatusClass(data.system.memory_percent, 70, 85),
+                            'fas fa-memory'
+                        );
+                        
+                        grid.innerHTML += createMetricCard(
+                            'Disk Usage', 
+                            data.system.disk_percent.toFixed(1) + '%', 
+                            getStatusClass(data.system.disk_percent, 70, 85),
+                            'fas fa-hdd'
+                        );
+                        
+                        grid.innerHTML += createMetricCard(
+                            'Memory Available', 
+                            (data.system.memory_total_gb - data.system.memory_used_gb).toFixed(1) + ' GB', 
+                            'status-info',
+                            'fas fa-memory'
+                        );
+                    }
+                    
+                    // Trading metrics
+                    if (data.trading && data.trading.status !== 'unavailable') {
+                        const statusClass = data.trading.status === 'running' ? 'status-good' : 'status-warning';
+                        grid.innerHTML += createMetricCard(
+                            'Trading Status', 
+                            data.trading.status || 'Unknown', 
+                            statusClass,
+                            'fas fa-chart-line'
+                        );
+                        
+                        if (data.trading.portfolio) {
+                            const portfolio = data.trading.portfolio;
+                            
+                            grid.innerHTML += createMetricCard(
+                                'Portfolio Value', 
+                                '$' + (portfolio.total_equity || 0).toFixed(2), 
+                                'status-info',
+                                'fas fa-wallet'
+                            );
+                            
+                            const dailyPnL = portfolio.daily_pnl || 0;
+                            const pnlClass = dailyPnL >= 0 ? 'status-good' : 'status-error';
+                            const pnlPrefix = dailyPnL >= 0 ? '+$' : '-$';
+                            
+                            grid.innerHTML += createMetricCard(
+                                'Daily P&L', 
+                                pnlPrefix + Math.abs(dailyPnL).toFixed(2), 
+                                pnlClass,
+                                'fas fa-chart-bar'
+                            );
+                            
+                            if (portfolio.max_drawdown_percent !== undefined) {
+                                grid.innerHTML += createMetricCard(
+                                    'Max Drawdown', 
+                                    portfolio.max_drawdown_percent.toFixed(2) + '%', 
+                                    getStatusClass(portfolio.max_drawdown_percent, 8, 10),
+                                    'fas fa-arrow-down'
+                                );
+                            }
+                            
+                            if (portfolio.trade_count !== undefined) {
+                                grid.innerHTML += createMetricCard(
+                                    'Trades Today', 
+                                    portfolio.trade_count.toString(), 
+                                    'status-info',
+                                    'fas fa-exchange-alt'
+                                );
+                            }
+                        }
+                    } else {
+                        grid.innerHTML += createMetricCard(
+                            'Trading Status', 
+                            'Unavailable', 
+                            'status-error',
+                            'fas fa-exclamation-triangle'
+                        );
+                    }
+                    
+                    // Update system status indicator
+                    updateSystemStatus(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching metrics:', error);
+                    document.getElementById('system-status').className = 'status-indicator status-error';
+                });
+        }
+        
+        function updateAlerts() {
+            fetch('/api/alerts')
+                .then(response => response.json())
+                .then(data => {
+                    const alertsContent = document.getElementById('alerts-content');
+                    alertsContent.innerHTML = '';
+                    
+                    if (data.alerts && data.alerts.length > 0) {
+                        data.alerts.slice(0, 10).forEach(alert => {
+                            const alertClass = alert.severity === 'CRITICAL' ? 'alert-critical' : 
+                                             alert.severity === 'WARNING' ? 'alert-warning' : 'alert-info';
+                            
+                            alertsContent.innerHTML += `
+                                <div class="${alertClass} alert-item">
+                                    <strong>${alert.type}</strong> - ${alert.severity}<br>
+                                    <small>${new Date(alert.timestamp).toLocaleString()}</small><br>
+                                    ${alert.message}
+                                </div>
+                            `;
+                        });
+                    } else {
+                        alertsContent.innerHTML = '<div class="alert-info alert-item">No recent alerts</div>';
+                    }
+                })
+                .catch(error => console.error('Error fetching alerts:', error));
+        }
+        
+        function updateLogs() {
+            fetch('/api/logs')
+                .then(response => response.json())
+                .then(data => {
+                    const logsContent = document.getElementById('logs-content');
+                    logsContent.innerHTML = '';
+                    
+                    if (data.logs) {
+                        data.logs.slice(-50).forEach(log => {
+                            const logClass = log.message.toLowerCase().includes('error') ? 'error' :
+                                           log.message.toLowerCase().includes('warning') ? 'warning' : 'info';
+                            
+                            logsContent.innerHTML += `<div class="log-entry ${logClass}">${log.message}</div>`;
+                        });
+                        logsContent.scrollTop = logsContent.scrollHeight;
+                    }
+                })
+                .catch(error => console.error('Error fetching logs:', error));
+        }
+        
+        function createMetricCard(label, value, statusClass, icon = '') {
+            const iconHtml = icon ? `<i class="${icon}" style="margin-right: 8px;"></i>` : '';
+            
+            return `
+                <div class="metric-card">
+                    <div class="metric-label">${iconHtml}${label}</div>
+                    <div class="metric-value ${statusClass}">${value}</div>
+                </div>
+            `;
+        }
+        
+        function getStatusClass(value, warning, error) {
+            if (value >= error) return 'status-error';
+            if (value >= warning) return 'status-warning';
+            return 'status-good';
+        }
+        
+        function updateSystemStatus(data) {
+            const statusIndicator = document.getElementById('system-status');
+            
+            // Determine overall system health
+            let hasErrors = false;
+            let hasWarnings = false;
+            
+            if (data.system) {
+                if (data.system.cpu_percent >= 90 || data.system.memory_percent >= 90 || data.system.disk_percent >= 90) {
+                    hasErrors = true;
+                } else if (data.system.cpu_percent >= 80 || data.system.memory_percent >= 80 || data.system.disk_percent >= 80) {
+                    hasWarnings = true;
+                }
+            }
+            
+            if (!data.trading || data.trading.status === 'unavailable') {
+                hasErrors = true;
+            }
+            
+            if (hasErrors) {
+                statusIndicator.className = 'status-indicator status-error';
+            } else if (hasWarnings) {
+                statusIndicator.className = 'status-indicator status-warning';
+            } else {
+                statusIndicator.className = 'status-indicator status-healthy';
+            }
+        }
+        
+        // Initialize dashboard
+        updateMetrics();
+        updateAlerts();
+        updateLogs();
+        
+        // Update every 30 seconds
+        setInterval(updateMetrics, 30000);
+        setInterval(updateAlerts, 60000);
+        setInterval(updateLogs, 60000);
+        
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'r' || e.key === 'R') {
+                updateMetrics();
+                updateAlerts();
+                updateLogs();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+[Unit]
+Description=AlphaPulse-RL Backup Service
+Documentation=https://github.com/your-org/alphapulse-rl
+
+[Service]
+Type=oneshot
+User=alphapulse
+Group=alphapulse
+WorkingDirectory=/opt/alphapulse-rl
+ExecStart=/opt/alphapulse-rl/deployment/scripts/backup_system.py create --type full
+StandardOutput=journal
+StandardError=journal
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/alphapulse-rl

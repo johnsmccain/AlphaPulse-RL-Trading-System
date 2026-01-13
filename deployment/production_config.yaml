@@ -1,0 +1,311 @@
+# AlphaPulse-RL Production Configuration
+# This file contains production-specific settings and overrides
+
+# System Configuration
+system:
+  environment: production
+  debug: false
+  log_level: INFO
+  max_workers: 4
+  
+  # Resource limits
+  memory_limit_mb: 4096
+  cpu_limit_cores: 4.0
+  
+  # Performance settings
+  enable_caching: true
+  cache_ttl_seconds: 300
+  batch_processing: true
+  max_batch_size: 100
+
+# Trading Configuration
+trading:
+  # Trading mode (paper or live)
+  mode: paper  # ALWAYS START WITH PAPER TRADING
+  
+  # Risk management
+  max_leverage: 12
+  max_position_size_percent: 10
+  max_daily_loss_percent: 3
+  max_total_drawdown_percent: 12
+  
+  # Trading pairs
+  pairs:
+    - BTCUSDT
+    - ETHUSDT
+  
+  # Model settings
+  confidence_threshold: 0.8
+  model_inference_timeout_ms: 5000
+  
+  # API settings
+  api_timeout_seconds: 10
+  api_retry_attempts: 3
+  api_retry_delay_seconds: 1
+  
+  # Position management
+  position_check_interval_seconds: 30
+  portfolio_update_interval_seconds: 60
+
+# Data Configuration
+data:
+  # Data sources
+  primary_source: weex
+  backup_sources: []
+  
+  # Data quality
+  max_data_age_minutes: 5
+  min_data_points: 100
+  
+  # Feature engineering
+  technical_indicators:
+    rsi_period: 14
+    macd_fast: 12
+    macd_slow: 26
+    macd_signal: 9
+    atr_period: 14
+  
+  # Data caching
+  cache_enabled: true
+  cache_size_mb: 512
+  cache_ttl_minutes: 5
+
+# Model Configuration
+model:
+  # Model files
+  model_path: models/ppo_agent.pth
+  backup_model_path: models/ppo_agent_backup.pth
+  
+  # Inference settings
+  batch_inference: true
+  max_inference_time_ms: 1000
+  
+  # Model validation
+  validate_outputs: true
+  confidence_calculation: true
+  
+  # Model updates
+  auto_reload: false
+  reload_check_interval_minutes: 60
+
+# Monitoring Configuration
+monitoring:
+  # Dashboard settings
+  dashboard_enabled: true
+  dashboard_port: 8081
+  dashboard_host: "0.0.0.0"
+  
+  # Metrics collection
+  metrics_interval_seconds: 30
+  metrics_retention_hours: 24
+  
+  # Health checks
+  health_check_interval_seconds: 60
+  health_check_timeout_seconds: 10
+  
+  # Performance monitoring
+  track_inference_time: true
+  track_api_response_time: true
+  track_memory_usage: true
+
+# Alerting Configuration
+alerting:
+  # Alert channels
+  email_enabled: false
+  webhook_enabled: false
+  
+  # Alert thresholds
+  cpu_warning_percent: 80
+  cpu_critical_percent: 90
+  memory_warning_percent: 80
+  memory_critical_percent: 90
+  disk_warning_percent: 80
+  disk_critical_percent: 90
+  
+  # Trading alerts
+  daily_loss_warning_percent: 2.5
+  daily_loss_critical_percent: 3.0
+  drawdown_warning_percent: 10.0
+  drawdown_critical_percent: 12.0
+  
+  # API alerts
+  api_error_rate_warning: 0.1  # 10%
+  api_error_rate_critical: 0.25  # 25%
+  
+  # Performance alerts
+  inference_time_warning_ms: 2000
+  inference_time_critical_ms: 5000
+  
+  # Alert cooldown
+  cooldown_minutes: 5
+  escalation_minutes: 30
+
+# Logging Configuration
+logging:
+  # Log levels
+  root_level: INFO
+  trading_level: INFO
+  model_level: INFO
+  api_level: WARNING
+  
+  # Log files
+  main_log: logs/alphapulse_{date}.log
+  trade_log: logs/trades.csv
+  decision_log: logs/ai_decisions.json
+  risk_log: logs/risk_alerts.json
+  
+  # Log rotation
+  max_file_size_mb: 100
+  backup_count: 10
+  
+  # Log format
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  date_format: "%Y-%m-%d %H:%M:%S"
+  
+  # Structured logging
+  json_logging: true
+  include_context: true
+
+# Security Configuration
+security:
+  # API security
+  api_key_rotation_days: 30
+  rate_limiting_enabled: true
+  max_requests_per_minute: 60
+  
+  # Access control
+  allowed_ips: []  # Empty means all IPs allowed
+  require_authentication: false
+  
+  # Data encryption
+  encrypt_sensitive_data: true
+  encryption_key_rotation_days: 90
+  
+  # Audit logging
+  audit_enabled: true
+  audit_log: logs/audit.log
+
+# Backup Configuration
+backup:
+  # Backup schedule
+  enabled: true
+  interval_hours: 6
+  retention_days: 30
+  
+  # Backup types
+  full_backup_weekly: true
+  incremental_backup_daily: true
+  
+  # Backup storage
+  local_backup_path: backups/
+  compression_enabled: true
+  
+  # Cloud backup
+  cloud_backup_enabled: false
+  cloud_provider: s3
+  cloud_bucket: alphapulse-backups
+  
+  # Backup verification
+  verify_backups: true
+  test_restore_monthly: true
+
+# Database Configuration (if using external database)
+database:
+  enabled: false
+  type: postgresql
+  host: localhost
+  port: 5432
+  name: alphapulse
+  pool_size: 10
+  max_overflow: 20
+  pool_timeout: 30
+
+# Redis Configuration
+redis:
+  enabled: true
+  host: redis
+  port: 6379
+  db: 0
+  password: null
+  
+  # Connection settings
+  max_connections: 50
+  socket_timeout: 5
+  socket_connect_timeout: 5
+  
+  # Memory settings
+  maxmemory: 256mb
+  maxmemory_policy: allkeys-lru
+
+# Network Configuration
+network:
+  # Proxy settings
+  proxy_enabled: false
+  http_proxy: null
+  https_proxy: null
+  
+  # SSL/TLS
+  ssl_enabled: false
+  ssl_cert_path: deployment/docker/ssl/cert.pem
+  ssl_key_path: deployment/docker/ssl/key.pem
+  
+  # Timeouts
+  connect_timeout: 10
+  read_timeout: 30
+  
+  # Retry settings
+  max_retries: 3
+  backoff_factor: 0.3
+
+# Development/Testing Overrides (only for non-production)
+development:
+  # Override settings for development
+  debug: true
+  log_level: DEBUG
+  trading_mode: paper
+  
+  # Reduced thresholds for testing
+  confidence_threshold: 0.6
+  position_check_interval_seconds: 10
+  
+  # Enhanced logging
+  verbose_logging: true
+  log_all_decisions: true
+
+# Feature Flags
+features:
+  # Experimental features
+  advanced_risk_management: true
+  multi_timeframe_analysis: true
+  sentiment_analysis: false
+  
+  # Performance features
+  gpu_acceleration: false
+  parallel_processing: true
+  
+  # Trading features
+  dynamic_position_sizing: true
+  adaptive_confidence_threshold: false
+  
+  # Monitoring features
+  real_time_dashboard: true
+  performance_analytics: true
+  trade_attribution: true
+
+# Compliance Configuration
+compliance:
+  # Regulatory requirements
+  record_keeping_enabled: true
+  audit_trail_enabled: true
+  
+  # Data retention
+  trade_data_retention_years: 7
+  log_data_retention_years: 3
+  
+  # Reporting
+  daily_reports_enabled: true
+  monthly_reports_enabled: true
+  
+  # Risk reporting
+  risk_report_frequency: daily
+  performance_report_frequency: weekly

@@ -1,0 +1,36 @@
+[Unit]
+Description=AlphaPulse-RL Trading System
+Documentation=https://github.com/your-org/alphapulse-rl
+After=docker.service network-online.target
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+User=alphapulse
+Group=alphapulse
+WorkingDirectory=/opt/alphapulse-rl/deployment/docker
+Environment=COMPOSE_PROJECT_NAME=alphapulse
+ExecStartPre=/usr/bin/docker-compose down --remove-orphans
+ExecStart=/usr/bin/docker-compose up -d
+ExecStop=/usr/bin/docker-compose down --timeout 30
+ExecReload=/usr/bin/docker-compose restart
+TimeoutStartSec=300
+TimeoutStopSec=60
+Restart=on-failure
+RestartSec=10
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/alphapulse-rl
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=4096
+
+[Install]
+WantedBy=multi-user.target

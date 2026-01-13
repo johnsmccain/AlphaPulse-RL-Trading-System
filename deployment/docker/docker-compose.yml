@@ -1,0 +1,137 @@
+version: '3.8'
+
+services:
+  alphapulse-trading:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/Dockerfile
+    container_name: alphapulse-trading
+    restart: unless-stopped
+    environment:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - WEEX_API_KEY=${WEEX_API_KEY}
+      - WEEX_SECRET_KEY=${WEEX_SECRET_KEY}
+      - WEEX_PASSPHRASE=${WEEX_PASSPHRASE}
+      - TRADING_MODE=${TRADING_MODE:-paper}
+      - INITIAL_BALANCE=${INITIAL_BALANCE:-1000}
+      - MAX_LEVERAGE=${MAX_LEVERAGE:-12}
+      - MAX_POSITION_SIZE_PERCENT=${MAX_POSITION_SIZE_PERCENT:-10}
+      - MAX_DAILY_LOSS_PERCENT=${MAX_DAILY_LOSS_PERCENT:-3}
+      - MAX_TOTAL_DRAWDOWN_PERCENT=${MAX_TOTAL_DRAWDOWN_PERCENT:-12}
+      - ENABLE_MONITORING=true
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CACHE_ENABLED=${CACHE_ENABLED:-true}
+      - BATCH_PROCESSING_ENABLED=${BATCH_PROCESSING_ENABLED:-true}
+      - PERFORMANCE_MONITORING=${PERFORMANCE_MONITORING:-true}
+    volumes:
+      - ../../data:/app/data
+      - ../../logs:/app/logs
+      - ../../config:/app/config
+      - ../../models:/app/models
+    ports:
+      - "8080:8080"  # Health check and metrics port
+    networks:
+      - alphapulse-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8080/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
+    depends_on:
+      - redis
+
+  alphapulse-monitor:
+    build:
+      context: ../..
+      dockerfile: deployment/docker/Dockerfile.monitor
+    container_name: alphapulse-monitor
+    restart: unless-stopped
+    environment:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - MONITORING_INTERVAL=${MONITORING_INTERVAL:-30}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - ALERT_EMAIL=${ALERT_EMAIL:-}
+      - ALERT_WEBHOOK=${ALERT_WEBHOOK:-}
+    volumes:
+      - ../../logs:/app/logs:ro
+      - ../../data:/app/data:ro
+    ports:
+      - "8081:8081"  # Monitoring dashboard
+    networks:
+      - alphapulse-network
+    depends_on:
+      - alphapulse-trading
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    container_name: alphapulse-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - alphapulse-network
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Log aggregation service
+  fluentd:
+    image: fluent/fluentd:v1.16-debian-1
+    container_name: alphapulse-logs
+    restart: unless-stopped
+    volumes:
+      - ../../logs:/fluentd/log
+      - ./fluentd.conf:/fluentd/etc/fluent.conf
+    ports:
+      - "24224:24224"
+    networks:
+      - alphapulse-network
+    depends_on:
+      - redis
+
+  # Nginx reverse proxy for production
+  nginx:
+    image: nginx:alpine
+    container_name: alphapulse-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    networks:
+      - alphapulse-network
+    depends_on:
+      - alphapulse-trading
+      - alphapulse-monitor
+
+networks:
+  alphapulse-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+    driver: local
